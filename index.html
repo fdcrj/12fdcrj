@@ -449,179 +449,325 @@ const DATA = [{"confraria": "3CJ", "confrariaNome": "3CJ", "categoria": "Estilo 
 const COLORS = {"Altbier": "hsl(170 62% 46%)", "American Amber Ale": "hsl(163 62% 46%)", "American Brown Ale": "hsl(263 62% 46%)", "American IPA": "hsl(134 62% 46%)", "American Lager": "hsl(168 62% 46%)", "American Pale Ale": "hsl(110 62% 46%)", "American Stout": "hsl(270 62% 46%)", "American Wheat Beer": "hsl(229 62% 46%)", "Baltic Porter": "hsl(93 62% 46%)", "Belgian Dark Strong Ale": "hsl(158 62% 46%)", "Belgian Dubbel": "hsl(277 62% 46%)", "Belgian Tripel": "hsl(200 62% 46%)", "Best Bitter": "hsl(13 62% 46%)", "Blonde Ale": "hsl(30 62% 46%)", "British Golden Ale": "hsl(248 62% 46%)", "Catharina Sour": "hsl(191 62% 46%)", "Cream Ale": "hsl(343 62% 46%)", "Dark Mild": "hsl(24 62% 46%)", "Double IPA": "hsl(277 62% 46%)", "Dunkles Bock": "hsl(87 62% 46%)", "English Porter": "hsl(56 62% 46%)", "Estilo Rio": "hsl(325 62% 46%)", "Estilo Rio Especial": "hsl(112 62% 46%)", "Experimental Beer": "hsl(303 62% 46%)", "Festbier": "hsl(199 62% 46%)", "Fruit Beer": "hsl(56 62% 46%)", "German Pils": "hsl(354 62% 46%)", "Gose": "hsl(66 62% 46%)", "Hazy IPA": "hsl(10 62% 46%)", "Imperial Stout": "hsl(253 62% 46%)", "International Pale Lager": "hsl(189 62% 46%)", "Irish Red Ale": "hsl(290 62% 46%)", "Mixed-Fermentation Sour Beer": "hsl(49 62% 46%)", "Mixed-Style Beer": "hsl(139 62% 46%)", "Munich Helles": "hsl(47 62% 46%)", "Não informado": "hsl(288 62% 46%)", "Oatmeal Stout": "hsl(171 62% 46%)", "Ordinary Bitter": "hsl(219 62% 46%)", "Saison": "hsl(224 62% 46%)", "Schwarzbier": "hsl(70 62% 46%)", "Specialty Fruit Beer": "hsl(176 62% 46%)", "Specialty IPA": "hsl(165 62% 46%)", "Specialty IPA: Black IPA": "hsl(106 62% 46%)", "Specialty IPA: Brut IPA": "hsl(111 62% 46%)", "Specialty IPA: Red IPA": "hsl(119 62% 46%)", "Spice, Herb, or Vegetable Beer": "hsl(267 62% 46%)", "Strong Bitter": "hsl(204 62% 46%)", "Weissbier": "hsl(273 62% 46%)", "Witbier": "hsl(10 62% 46%)", "Wood-Aged Beer": "hsl(325 62% 46%)"};
 const BEERS = DATA.map((b,i)=>({...b,id:i}));
 
-const $ = s => document.querySelector(s);
-const esc = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const norm = s => String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-const color = e => COLORS[e] || '#94a3b8';
+// Cores temáticas por família de estilo
+const FAM_COLORS = {
+  "Ales maltadas": "#d97706",
+  "Escuras tostadas": "#451a03",
+  "IPA & Lupuladas": "#15803d",
+  "Ales claras": "#eab308",
+  "Lagers": "#f59e0b",
+  "Trigo": "#ca8a04",
+  "Especiais & Frutadas": "#0284c7",
+  "Belgas & Saison": "#b45309",
+  "Ácidas & Sours": "#ec4899",
+  "Outros": "#64748b"
+};
 
-/* ---------- estado persistido ---------- */
-const KEY='guia12fdcrj';
-const storage=(()=>{ try{ const k=KEY+':probe'; window.localStorage.setItem(k,'1'); window.localStorage.removeItem(k); return window.localStorage; }catch(e){ return null; } })();
-let store=(()=>{ try{ return storage ? JSON.parse(storage.getItem(KEY)||'{}') : {}; }catch(e){ return {}; } })();
-const save=()=>{ try{ if(storage) storage.setItem(KEY,JSON.stringify(store)); }catch(e){} };
-const rec=id=>(store[id] ||= {fav:false,rating:0,notes:''});
+let userFavs = JSON.parse(localStorage.getItem('fdcrj_favs') || '[]');
+let userRatings = JSON.parse(localStorage.getItem('fdcrj_ratings') || '{}');
+let userNotes = JSON.parse(localStorage.getItem('fdcrj_notes') || '{}');
+let activeModalBeer = null;
 
-/* ---------- selects ---------- */
-function fill(sel, label, values){
-  sel.innerHTML = `<option value="">${label}</option>` +
-    values.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');
+// Elementos DOM
+const $ = s => document.querySelector(s); const $$ = s => document.querySelectorAll(s);
+
+// Inicialização
+function init() {
+  setupTheme();
+  buildFilters();
+  renderGrid();
+  renderLegend();
+  updateStats();
+  bindEvents();
+  parseURLParams();
 }
-const uniq = k => [...new Set(BEERS.map(b=>b[k]))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-fill($('#cf'),'Todas as confrarias',uniq('confraria'));
-fill($('#ct'),'Todas as categorias',uniq('categoria'));
-fill($('#fm'),'Todas as famílias',uniq('familia'));
-fill($('#st'),'Todos os estilos',uniq('estilo'));
 
-const q=$('#q'),cf=$('#cf'),ct=$('#ct'),fm=$('#fm'),st=$('#st'),or=$('#or');
-const toggles={onlyFav:$('#onlyFav'),onlyDesc:$('#onlyDesc'),onlyRio:$('#onlyRio'),onlyIpa:$('#onlyIpa')};
-const state={onlyFav:false,onlyDesc:false,onlyRio:false,onlyIpa:false};
+function setupTheme() {
+  const savedTheme = localStorage.getItem('fdcrj_theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  $('#theme').textContent = savedTheme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+}
 
-/* ---------- filtro ---------- */
-function list(){
-  const z = norm(q.value.trim());
-  let a = BEERS.filter(b=>{
-    if(cf.value && b.confraria!==cf.value) return false;
-    if(ct.value && b.categoria!==ct.value) return false;
-    if(fm.value && b.familia!==fm.value) return false;
-    if(st.value && b.estilo!==st.value) return false;
-    if(state.onlyFav && !rec(b.id).fav) return false;
-    if(state.onlyDesc && !b.descricao) return false;
-    if(state.onlyRio && !/Estilo Rio/i.test(b.categoria+' '+b.estilo)) return false;
-    if(state.onlyIpa && !/IPA/.test(b.estilo)) return false;
-    if(z && !norm([b.cerveja,b.estilo,b.confraria,b.confrariaNome,b.categoria,b.familia,b.responsavel,b.descricao].join(' ')).includes(z)) return false;
+$('#theme').addEventListener('click', () => {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('fdcrj_theme', next);
+  $('#theme').textContent = next === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Escuro';
+});
+
+function buildFilters() {
+  const confs = [...new Set(DATA.map(d => d.confrariaNome))].sort();
+  const cats = [...new Set(DATA.map(d => d.categoria))].sort();
+  const fams = [...new Set(DATA.map(d => d.familia))].sort();
+  const styles = [...new Set(DATA.map(d => d.estilo))].sort();
+
+  fillSelect('#cf', 'Todas as Confrarias', confs);
+  fillSelect('#ct', 'Todas as Categorias', cats);
+  fillSelect('#fm', 'Todas as Famílias', fams);
+  fillSelect('#st', 'Todos os Estilos', styles);
+}
+
+function fillSelect(sel, placeholder, items) {
+  const el = $(sel);
+  el.innerHTML = `<option value="">${placeholder}</option>` +
+    items.map(i => `<option value="${escapeAttr(i)}">${escapeHtml(i)}</option>`).join('');
+}
+
+function getFilteredData() {
+  const q = $('#q').value.toLowerCase().trim();
+  const cf = $('#cf').value;
+  const ct = $('#ct').value;
+  const fm = $('#fm').value;
+  const st = $('#st').value;
+  const sort = $('#or').value;
+
+  const onlyFav = $('#onlyFav').getAttribute('aria-pressed') === 'true';
+  const onlyDesc = $('#onlyDesc').getAttribute('aria-pressed') === 'true';
+  const onlyRio = $('#onlyRio').getAttribute('aria-pressed') === 'true';
+  const onlyIpa = $('#onlyIpa').getAttribute('aria-pressed') === 'true';
+
+  return DATA.filter((item, idx) => {
+    if (cf && item.confrariaNome !== cf) return false;
+    if (ct && item.categoria !== ct) return false;
+    if (fm && item.familia !== fm) return false;
+    if (st && item.estilo !== st) return false;
+
+    if (onlyFav && !userFavs.includes(idx)) return false;
+    if (onlyDesc && !item.descricao) return false;
+    if (onlyRio && !item.categoria.includes('Rio') && item.estilo !== 'Estilo Rio') return false;
+    if (onlyIpa && !item.estilo.toLowerCase().includes('ipa') && !item.familia.toLowerCase().includes('ipa')) return false;
+
+    if (q) {
+      const haystack = [item.cerveja, item.estilo, item.confrariaNome, item.responsavel, item.descricao, item.categoria, item.familia].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+
     return true;
+  }).sort((a, b) => {
+    const idxA = DATA.indexOf(a);
+    const idxB = DATA.indexOf(b);
+    if (sort === 'cerveja') return a.cerveja.localeCompare(b.cerveja);
+    if (sort === 'confraria') return a.confrariaNome.localeCompare(b.confrariaNome);
+    if (sort === 'estilo') return a.estilo.localeCompare(b.estilo);
+    if (sort === 'categoria') return a.categoria.localeCompare(b.categoria);
+    if (sort === 'rating') {
+      const rA = userRatings[idxA] || 0;
+      const rB = userRatings[idxB] || 0;
+      return rB - rA;
+    }
+    return 0;
   });
-  const k=or.value;
-  a.sort((x,y)=> k==='rating'
-    ? (rec(y.id).rating-rec(x.id).rating) || x.cerveja.localeCompare(y.cerveja,'pt-BR')
-    : (x[k]||'').localeCompare(y[k]||'','pt-BR') || x.cerveja.localeCompare(y.cerveja,'pt-BR'));
-  return a;
 }
 
-function render(){
-  const a=list();
-  const nf = BEERS.filter(b=>rec(b.id).fav).length;
-  $('#sFav').textContent=nf;
-  $('#count').textContent = `${a.length} de ${BEERS.length} cervejas` +
-    (a.length?` • ${new Set(a.map(b=>b.confraria)).size} confrarias • ${new Set(a.map(b=>b.estilo)).size} estilos`:'');
-  $('#grid').innerHTML = a.length ? a.map(b=>{
-    const r=rec(b.id);
-    return `<article class="card" style="--c:${color(b.estilo)}" data-id="${b.id}" tabindex="0">
-      <div class="stripe"></div>
-      <div class="body">
-        <button class="fav" data-fav="${b.id}" aria-pressed="${r.fav}" title="Favoritar">${r.fav?'⭐':'☆'}</button>
-        <span class="tag">${esc(b.estilo)}</span>
-        <h3>${esc(b.cerveja)}</h3>
-        <div class="meta">${esc(b.confraria)} • ${esc(b.categoria)}${r.rating?' • '+'★'.repeat(r.rating):''}</div>
-        <p class="desc">${esc(b.descricao||'Descrição não informada pela confraria.')}</p>
-        <div class="owner">Responsável: ${esc(b.responsavel)}</div>
-      </div></article>`;
-  }).join('') : `<div class="empty"><b>Nenhuma cerveja encontrada.</b><br>Tente remover um filtro ou simplificar a busca.</div>`;
+function renderGrid() {
+  const list = getFilteredData();
+  const grid = $('#grid');
+  $('#count').textContent = `${list.length} cerveja(s) encontrada(s)`;
+
+  if (list.length === 0) {
+    grid.innerHTML = `<div class="empty"><h3>Nenhuma cerveja encontrada</h3><p>Tente ajustar os filtros ou limpar a pesquisa.</p></div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(item => {
+    const idx = DATA.indexOf(item);
+    const color = FAM_COLORS[item.familia] || 'var(--brand)';
+    const isFav = userFavs.includes(idx);
+    const rating = userRatings[idx] || 0;
+    const stars = rating > 0 ? ' ⭐'.repeat(rating) : '';
+
+    return `
+      <article class="card" onclick="openModal(${idx})">
+        <div class="stripe" style="--c:${color}"></div>
+        <div class="body">
+          <div><span class="tag" style="--c:${color}">${escapeHtml(item.familia)}</span></div>
+          <button class="fav" aria-pressed="${isFav}" onclick="toggleFav(event, ${idx})" title="Favoritar">⭐</button>
+          <h3>${escapeHtml(item.cerveja)}${stars}</h3>
+          <div class="meta">${escapeHtml(item.estilo)} • <strong>${escapeHtml(item.confrariaNome)}</strong></div>
+          <p class="desc">${item.descricao ? escapeHtml(item.descricao) : '<em>Sem descrição sensorial detalhada.</em>'}</p>
+          <div class="owner">👤 ${escapeHtml(item.responsavel)} (${escapeHtml(item.categoria)})</div>
+        </div>
+      </article>
+    `;
+  }).join('');
 }
 
-/* ---------- modal ---------- */
-let current=null;
-function openM(b){
-  current=b; const r=rec(b.id), c=color(b.estilo);
-  $('#ms').style.background=c;
-  $('#mt').textContent=b.estilo; $('#mt').style.setProperty('--c',c);
-  $('#mn').textContent=b.cerveja;
-  $('#mfam').textContent=b.familia;
-  $('#details').innerHTML=`
-    <div class="detail"><b>Confraria</b>${esc(b.confrariaNome)}</div>
-    <div class="detail"><b>Categoria</b>${esc(b.categoria)}</div>
-    <div class="detail"><b>Responsável</b>${esc(b.responsavel)}</div>
-    <div class="detail"><b>Estilo BJCP</b>${esc(b.estilo)}</div>`;
-  $('#mdesc').textContent=b.descricao||'Descrição não informada pela confraria.';
-  $('#notes').value=r.notes;
-  $('#mfav').setAttribute('aria-pressed',r.fav);
-  $('#mfav').textContent=r.fav?'⭐ Favoritada':'☆ Favoritar';
-  drawStars(r.rating);
+function renderLegend() {
+  const chips = $('#chips');
+  chips.innerHTML = Object.keys(FAM_COLORS).map(fam => {
+    const color = FAM_COLORS[fam];
+    const count = DATA.filter(d => d.familia === fam).length;
+    return `
+      <button class="chip" onclick="filterByFam('${fam}')">
+        <span class="dot" style="--c:${color}"></span>
+        <span>${escapeHtml(fam)}</span>
+        <b>(${count})</b>
+      </button>
+    `;
+  }).join('');
+}
+
+function filterByFam(fam) {
+  $('#fm').value = fam;
+  renderGrid();
+  window.scrollTo({ top: $('#grid').offsetTop - 80, behavior: 'smooth' });
+}
+
+function updateStats() {
+  $('#sBeers').textContent = DATA.length;
+  $('#sConf').textContent = new Set(DATA.map(d => d.confrariaNome)).size;
+  $('#sStyles').textContent = new Set(DATA.map(d => d.estilo)).size;
+  $('#sFav').textContent = userFavs.length;
+}
+
+function toggleFav(e, idx) {
+  e.stopPropagation();
+  const p = userFavs.indexOf(idx);
+  if (p >= 0) userFavs.splice(p, 1);
+  else userFavs.push(idx);
+
+  localStorage.setItem('fdcrj_favs', JSON.stringify(userFavs));
+  updateStats();
+  renderGrid();
+  showToast(p >= 0 ? 'Removido dos favoritos' : 'Adicionado aos favoritos ⭐');
+}
+
+function openModal(idx) {
+  activeModalBeer = idx;
+  const item = DATA[idx];
+  const color = FAM_COLORS[item.familia] || 'var(--brand)';
+
+  $('#ms').style.background = color;
+  $('#mt').textContent = item.categoria;
+  $('#mt').style.setProperty('--c', color);
+  $('#mn').textContent = item.cerveja;
+  $('#mfam').textContent = `${item.estilo} • ${item.familia}`;
+
+  $('#details').innerHTML = `
+    <div class="detail"><b>Confraria</b>${escapeHtml(item.confrariaNome)}</div>
+    <div class="detail"><b>Responsável</b>${escapeHtml(item.responsavel)}</div>
+  `;
+
+  $('#mdesc').innerHTML = item.descricao ? escapeHtml(item.descricao) : '<em>Sem descrição adicional cadastrada para esta cerveja.</em>';
+  $('#notes').value = userNotes[idx] || '';
+
+  renderModalStars(userRatings[idx] || 0);
+
+  const isFav = userFavs.includes(idx);
+  const mfav = $('#mfav');
+  mfav.setAttribute('aria-pressed', isFav);
+  mfav.textContent = isFav ? '⭐ Favoritado' : '⭐ Favoritar';
+
   $('#modal').classList.add('open');
-  $('#x').focus();
 }
-function drawStars(n){
-  $('#rate').innerHTML=[1,2,3,4,5].map(i=>`<button class="star ${i<=n?'on':''}" data-s="${i}" aria-label="${i} estrelas">★</button>`).join('')
-    + `<button class="pill" data-s="0" style="margin-left:6px">limpar</button>`;
+
+function renderModalStars(rating) {
+  const container = $('#rate');
+  let html = '';
+  for (let i = 1; i <= 5; i++) {
+    html += `<button type="button" class="star ${i <= rating ? 'on' : ''}" onclick="setRating(${i})">⭐</button>`;
+  }
+  container.innerHTML = html;
 }
-const closeM=()=>{ $('#modal').classList.remove('open'); current=null; render(); };
 
-/* ---------- eventos ---------- */
-[q,cf,ct,fm,st,or].forEach(el=>el.addEventListener(el===q?'input':'change',()=>{render();syncURL()}));
-Object.entries(toggles).forEach(([k,el])=>el.addEventListener('click',()=>{
-  state[k]=!state[k]; el.setAttribute('aria-pressed',state[k]); render(); syncURL();
-}));
-$('#clear').onclick=()=>{
-  q.value=cf.value=ct.value=fm.value=st.value=''; or.value='cerveja';
-  Object.keys(state).forEach(k=>{state[k]=false;toggles[k].setAttribute('aria-pressed','false')});
-  history.replaceState(null,'',location.pathname); render();
-};
-$('#grid').addEventListener('click',e=>{
-  const f=e.target.closest('[data-fav]');
-  if(f){ const r=rec(+f.dataset.fav); r.fav=!r.fav; save(); render(); return; }
-  const c=e.target.closest('.card'); if(c) openM(BEERS[+c.dataset.id]);
-});
-$('#grid').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){const c=e.target.closest('.card'); if(c) openM(BEERS[+c.dataset.id]);}
-});
-$('#rate').addEventListener('click',e=>{
-  const b=e.target.closest('[data-s]'); if(!b||!current) return;
-  rec(current.id).rating=+b.dataset.s; save(); drawStars(+b.dataset.s);
-});
-$('#notes').addEventListener('input',()=>{ if(current){ rec(current.id).notes=$('#notes').value; save(); }});
-$('#mfav').onclick=()=>{ if(!current)return; const r=rec(current.id); r.fav=!r.fav; save();
-  $('#mfav').setAttribute('aria-pressed',r.fav); $('#mfav').textContent=r.fav?'⭐ Favoritada':'☆ Favoritar'; };
-$('#x').onclick=closeM;
-$('#modal').onclick=e=>{ if(e.target.id==='modal') closeM(); };
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&$('#modal').classList.contains('open')) closeM(); });
-$('#print').onclick=()=>window.print();
-
-/* ---------- legenda ---------- */
-const counts={}; BEERS.forEach(b=>counts[b.estilo]=(counts[b.estilo]||0)+1);
-$('#chips').innerHTML=Object.keys(counts).sort((a,b)=>a.localeCompare(b,'pt-BR'))
-  .map(s=>`<button class="chip" style="--c:${color(s)}" data-s="${esc(s)}"><i class="dot"></i>${esc(s)} <b>${counts[s]}</b></button>`).join('');
-$('#chips').onclick=e=>{
-  const b=e.target.closest('[data-s]'); if(!b) return;
-  st.value = st.value===b.dataset.s ? '' : b.dataset.s;
-  render(); syncURL();
-  document.querySelector('.bar').scrollIntoView({behavior:'smooth',block:'start'});
-};
-
-/* ---------- URL compartilhável ---------- */
-function syncURL(){
-  const p=new URLSearchParams();
-  if(q.value)p.set('q',q.value); if(cf.value)p.set('cf',cf.value); if(ct.value)p.set('ct',ct.value);
-  if(fm.value)p.set('fm',fm.value); if(st.value)p.set('st',st.value); if(or.value!=='cerveja')p.set('or',or.value);
-  Object.keys(state).forEach(k=>{ if(state[k]) p.set(k,'1'); });
-  history.replaceState(null,'', p.toString()?`?${p}`:location.pathname);
+function setRating(r) {
+  if (activeModalBeer === null) return;
+  userRatings[activeModalBeer] = r;
+  localStorage.setItem('fdcrj_ratings', JSON.stringify(userRatings));
+  renderModalStars(r);
+  renderGrid();
 }
-(function initURL(){
-  const p=new URLSearchParams(location.search);
-  q.value=p.get('q')||''; cf.value=p.get('cf')||''; ct.value=p.get('ct')||'';
-  fm.value=p.get('fm')||''; st.value=p.get('st')||''; or.value=p.get('or')||'cerveja';
-  Object.keys(state).forEach(k=>{ if(p.get(k)){ state[k]=true; toggles[k].setAttribute('aria-pressed','true'); }});
-})();
-const toast=m=>{ const t=$('#toast'); t.textContent=m; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2000); };
-$('#share').onclick=async()=>{
-  syncURL();
-  try{ await navigator.clipboard.writeText(location.href); toast('Link copiado!'); }
-  catch{ toast(location.href); }
-};
 
-/* ---------- tema ---------- */
-const themeKey=KEY+':theme';
-const setTheme=t=>{ document.documentElement.dataset.theme=t;
-  $('#theme').textContent = t==='dark'?'☀️ Tema':'🌙 Tema'; try{ if(storage) storage.setItem(themeKey,t); }catch(e){} };
-let savedTheme=''; try{ savedTheme=storage ? storage.getItem(themeKey)||'' : ''; }catch(e){}
-setTheme(savedTheme || (matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'));
-$('#theme').onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
+$('#notes').addEventListener('input', (e) => {
+  if (activeModalBeer === null) return;
+  userNotes[activeModalBeer] = e.target.value;
+  localStorage.setItem('fdcrj_notes', JSON.stringify(userNotes));
+});
 
-/* ---------- boot ---------- */
-$('#sBeers').textContent=BEERS.length;
-$('#sConf').textContent=new Set(BEERS.map(b=>b.confraria)).size;
-$('#sStyles').textContent=new Set(BEERS.map(b=>b.estilo)).size;
-render();
+$('#mfav').addEventListener('click', () => {
+  if (activeModalBeer === null) return;
+  toggleFav(new Event('click'), activeModalBeer);
+  const isFav = userFavs.includes(activeModalBeer);
+  $('#mfav').setAttribute('aria-pressed', isFav);
+  $('#mfav').textContent = isFav ? '⭐ Favoritado' : '⭐ Favoritar';
+});
+
+function closeModal() {
+  $('#modal').classList.remove('open');
+  activeModalBeer = null;
+}
+
+$('#x').addEventListener('click', closeModal);
+$('#modal').addEventListener('click', e => { if (e.target === $('#modal')) closeModal(); });
+
+function bindEvents() {
+  ['#q', '#cf', '#ct', '#fm', '#st', '#or'].forEach(sel => {
+    $(sel).addEventListener('input', renderGrid);
+  });
+
+  ['onlyFav', 'onlyDesc', 'onlyRio', 'onlyIpa'].forEach(id => {
+    $(`#${id}`).addEventListener('click', function() {
+      const pressed = this.getAttribute('aria-pressed') === 'true';
+      this.setAttribute('aria-pressed', !pressed);
+      renderGrid();
+    });
+  });
+
+  $('#clear').addEventListener('click', () => {
+    $('#q').value = '';
+    $('#cf').value = '';
+    $('#ct').value = '';
+    $('#fm').value = '';
+    $('#st').value = '';
+    $('#or').value = 'cerveja';     $$('.quick .pill[aria-pressed]').forEach(btn => btn.setAttribute('aria-pressed', 'false'));
+    renderGrid();
+    showToast('Filtros limpos');
+  });
+
+  $('#print').addEventListener('click', () => window.print());
+
+  $('#share').addEventListener('click', () => {
+    const params = new URLSearchParams();
+    if ($('#q').value) params.set('q', $('#q').value);
+    if ($('#cf').value) params.set('cf', $('#cf').value);
+    if ($('#ct').value) params.set('ct', $('#ct').value);
+    if ($('#fm').value) params.set('fm', $('#fm').value);
+    if ($('#st').value) params.set('st', $('#st').value);
+    
+    const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showToast('Link de filtros copiado!');
+    });
+  });
+}
+
+function parseURLParams() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.get('q')) $('#q').value = p.get('q');
+  if (p.get('cf')) $('#cf').value = p.get('cf');
+  if (p.get('ct')) $('#ct').value = p.get('ct');
+  if (p.get('fm')) $('#fm').value = p.get('fm');
+  if (p.get('st')) $('#st').value = p.get('st');
+  renderGrid();
+}
+
+function showToast(msg) {
+  const toast = $('#toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function escapeAttr(str) {
+  return String(str || '').replace(/"/g, '&quot;');
+}
+
+document.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
 </html>
+
