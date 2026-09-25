@@ -3,133 +3,363 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#102a43">
-<meta name="description" content="Guia interativo das cervejas do 12º Festival de Confrarias do Rio de Janeiro. Filtre por confraria, estilo BJCP, categoria e ingredientes.">
-<title>Guia de Cervejas • 12º Festival de Confrarias do Rio de Janeiro</title>
+<meta name="theme-color" content="#0f2b48">
+<meta name="description" content="Guia oficial interativo do 12º Festival de Confrarias do Rio de Janeiro (12FDCRJ). Encontre cervejas por confraria, estilo, categoria e degustação.">
+<title>Guia de Cervejas • 12º Festival de Confrarias do Rio de Janeiro - 12FDCRJ</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍺</text></svg>">
 <style>
-:root{
-  --bg:#f5f8fb; --card:#fff; --ink:#152f4a; --muted:#5d7a95; --line:#dbe4ee; --brand:#0e7490; --brand-ink:#0b5566;
-  --shadow:0 6px 18px rgba(16,42,67,.08); --radius:16px;
+:root {
+  --bg: #f4f7f6;
+  --card: #ffffff;
+  --ink: #0f2b48;
+  --muted: #5c7080;
+  --line: #d8e2ea;
+  --brand: #e67e22;        /* Tom cervejeiro/dourado vibrante */
+  --brand-ink: #a04000;
+  --accent: #2a9d8f;       /* Toque tropical / Rio */
+  --header-bg: linear-gradient(135deg, #0f2b48 0%, #1b4965 60%, #e67e22 100%);
+  --shadow: 0 6px 18px rgba(15, 43, 72, 0.08);
+  --radius: 16px;
 }
-html[data-theme="dark"]{
-  --bg:#0c1723; --card:#132434; --ink:#e7f0f8; --muted:#95aec5; --line:#23394f;
-  --brand:#38bdf8; --brand-ink:#bae6fd; --shadow:0 6px 18px rgba(0,0,0,.35);
+
+html[data-theme="dark"] {
+  --bg: #0a141d;
+  --card: #122230;
+  --ink: #e6f1f8;
+  --muted: #8fa2b3;
+  --line: #1e354a;
+  --brand: #f39c12;
+  --brand-ink: #fdebd0;
+  --accent: #48cae4;
+  --header-bg: linear-gradient(135deg, #07121b 0%, #0f2b48 60%, #b35400 100%);
+  --shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
-*{box-sizing:border-box}
-body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
-  background:var(--bg);color:var(--ink);line-height:1.5;-webkit-text-size-adjust:100%}
-a{color:var(--brand)}
-.wrap{max-width:1180px;margin:auto;padding:0 16px}
-header{background:linear-gradient(140deg,#0b2033,#14506d 55%,#0e7490);color:#fff;
-  padding:26px 0 86px;position:relative;overflow:hidden}
-header::after{content:"🍺";position:absolute;right:-10px;top:-20px;font-size:180px;opacity:.07}
-.kicker{letter-spacing:.16em;font-size:.72rem;font-weight:800;color:#bfe3f2;text-transform:uppercase}
-h1{font-size:clamp(1.9rem,6vw,3.2rem);margin:6px 0 4px;line-height:1.1}
-.sub{color:#d6ecf7;max-width:62ch;margin:0}
-.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.ghost{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);color:#fff;
-  border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:.85rem}
-.ghost:hover{background:rgba(255,255,255,.26)}
-.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-.stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
-  border-radius:14px;padding:10px 16px;min-width:104px}
-.stat b{display:block;font-size:1.5rem;line-height:1.1}
-.stat small{color:#cfe7f4;font-size:.74rem;text-transform:uppercase;letter-spacing:.06em}
-main{margin-top:-62px;padding-bottom:56px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;
-  padding:16px;box-shadow:var(--shadow)}
-.search-row{display:flex;gap:10px;flex-wrap:wrap}
-.search{flex:1 1 280px;height:52px;border:2px solid var(--line);border-radius:14px;
-  padding:0 16px;font-size:1rem;background:var(--card);color:var(--ink)}
-.search:focus,select:focus,button:focus-visible{outline:3px solid color-mix(in srgb,var(--brand) 35%,transparent);
-  border-color:var(--brand)}
-.sel{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:12px}
-.field label{display:block;font-size:.68rem;font-weight:800;color:var(--muted);
-  text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px}
-select{width:100%;height:44px;border:1px solid var(--line);border-radius:12px;
-  background:var(--card);color:var(--ink);padding:0 10px;font-size:.92rem}
-.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
-.pill{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;
-  padding:7px 13px;font-size:.82rem;font-weight:700;cursor:pointer}
-.pill[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
-.clear{margin-left:auto;border:0;background:color-mix(in srgb,var(--brand) 14%,transparent);
-  color:var(--brand-ink);border-radius:999px;padding:8px 14px;font-weight:800;cursor:pointer;font-size:.82rem}
-.bar{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;
-  margin:26px 4px 12px;flex-wrap:wrap}
-.bar h2{margin:0;font-size:1.15rem}
-.bar span{font-size:.85rem;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(262px,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;
-  box-shadow:var(--shadow);cursor:pointer;transition:transform .16s,box-shadow .16s;
-  display:flex;flex-direction:column;position:relative}
-.card:hover{transform:translateY(-3px);box-shadow:0 14px 28px rgba(16,42,67,.16)}
-.stripe{height:8px;background:var(--c)}
-.body{padding:14px;display:flex;flex-direction:column;flex:1}
-.tag{display:inline-block;background:color-mix(in srgb,var(--c) 20%,transparent);
-  color:var(--c);border:1px solid color-mix(in srgb,var(--c) 40%,transparent);
-  border-radius:999px;padding:4px 10px;font-size:.68rem;font-weight:800;max-width:100%}
-.card h3{margin:10px 34px 4px 0;font-size:1.06rem;line-height:1.25}
-.meta{font-size:.8rem;color:var(--muted);font-weight:600}
-.desc{font-size:.89rem;margin:10px 0 12px;color:var(--ink);opacity:.9;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;flex:1}
-.owner{font-size:.78rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:9px}
-.fav{position:absolute;top:12px;right:10px;border:0;background:transparent;font-size:1.25rem;
-  line-height:1;cursor:pointer;filter:grayscale(1);opacity:.45;padding:4px}
-.fav[aria-pressed="true"]{filter:none;opacity:1}
-.empty{grid-column:1/-1;text-align:center;background:var(--card);border:1px dashed var(--muted);
-  border-radius:16px;padding:40px 20px;color:var(--muted)}
-.legend{margin-top:30px}
-.legend h2{margin:0 0 4px;font-size:1.1rem}
-.legend p{margin:0 0 12px;color:var(--muted);font-size:.85rem}
-.chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;
-  padding:6px 12px;font-size:.8rem;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-.chip:hover{border-color:var(--brand)}
-.chip b{color:var(--muted);font-weight:700}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--c);display:inline-block}
-.modal{position:fixed;inset:0;background:rgba(7,27,45,.72);display:none;align-items:center;
-  justify-content:center;padding:14px;z-index:20}
-.modal.open{display:flex}
-.dialog{width:min(620px,100%);max-height:90vh;overflow:auto;background:var(--card);
-  border-radius:22px;box-shadow:0 30px 60px rgba(0,0,0,.4)}
-.inside{padding:20px}
-.x{float:right;border:1px solid var(--line);background:transparent;color:var(--ink);
-  border-radius:50%;width:38px;height:38px;font-size:20px;cursor:pointer}
-#mn{margin:10px 0 2px;font-size:1.5rem}
-.details{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
-.detail{background:color-mix(in srgb,var(--ink) 6%,transparent);border-radius:12px;padding:11px}
-.detail b{display:block;color:var(--muted);text-transform:uppercase;font-size:.66rem;
-  letter-spacing:.07em;margin-bottom:3px}
-#mdesc{line-height:1.6}
-.notes{width:100%;min-height:86px;border:1px solid var(--line);border-radius:12px;padding:10px;
-  font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
-.rate{display:flex;gap:6px;align-items:center;margin:10px 0}
-.star{border:0;background:transparent;font-size:1.5rem;cursor:pointer;filter:grayscale(1);opacity:.4;padding:0 2px}
-.star.on{filter:none;opacity:1}
-footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);font-size:.85rem}
-.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,120%);background:var(--ink);
-  color:var(--bg);padding:11px 18px;border-radius:999px;font-size:.86rem;font-weight:700;
-  transition:transform .25s;z-index:30}
-.toast.show{transform:translate(-50%,0)}
-@media(max-width:900px){.sel{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.sel{grid-template-columns:1fr}.grid{grid-template-columns:1fr}
-  .details{grid-template-columns:1fr}.clear{margin-left:0;width:100%}}
-@media print{header,.panel,.quick,.legend,footer,.fav{display:none!important}
-  .card{break-inside:avoid;box-shadow:none}main{margin-top:10px}}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: 1180px; margin: auto; padding: 0 16px; }
+
+/* Header */
+header {
+  background: var(--header-bg);
+  color: #fff;
+  padding: 30px 0 90px;
+  position: relative;
+  overflow: hidden;
+}
+header::after {
+  content: "🍺";
+  position: absolute;
+  right: -10px;
+  top: -20px;
+  font-size: 200px;
+  opacity: 0.08;
+  pointer-events: none;
+}
+.kicker {
+  letter-spacing: 0.16em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #fceae6;
+  text-transform: uppercase;
+}
+h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin: 6px 0 6px; line-height: 1.1; font-weight: 800; }
+.sub { color: #d0e1fd; max-width: 64ch; margin: 0; font-size: 0.98rem; opacity: 0.95; }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ghost {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+.ghost:hover { background: rgba(255, 255, 255, 0.3); }
+
+.stats { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px; }
+.stat {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 14px;
+  padding: 10px 18px;
+  min-width: 108px;
+  backdrop-filter: blur(4px);
+}
+.stat b { display: block; font-size: 1.6rem; line-height: 1; }
+.stat small { color: #f2f7fc; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+/* Main layout & Panel */
+main { margin-top: -62px; padding-bottom: 56px; }
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.search-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.search {
+  flex: 1 1 280px;
+  height: 52px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  padding: 0 18px;
+  font-size: 1rem;
+  background: var(--card);
+  color: var(--ink);
+  transition: border-color 0.2s;
+}
+.search:focus, select:focus, button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--brand) 35%, transparent);
+  border-color: var(--brand);
+}
+.sel { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 14px; }
+.field label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin-bottom: 5px;
+}
+select {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 0 10px;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+.quick { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+.pill {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.pill:hover { border-color: var(--brand); color: var(--brand); }
+.pill[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+.clear {
+  margin-left: auto;
+  border: 0;
+  background: color-mix(in srgb, var(--brand) 15%, transparent);
+  color: var(--brand-ink);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-weight: 800;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+.clear:hover { background: color-mix(in srgb, var(--brand) 25%, transparent); }
+
+/* Bar & Cards Grid */
+.bar { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 26px 4px 14px; flex-wrap: wrap; }
+.bar h2 { margin: 0; font-size: 1.2rem; font-weight: 800; }
+.bar span { font-size: 0.88rem; color: var(--muted); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.card:hover { transform: translateY(-4px); box-shadow: 0 14px 28px rgba(15, 43, 72, 0.15); }
+.stripe { height: 8px; background: var(--c, var(--brand)); }
+.body { padding: 16px; display: flex; flex-direction: column; flex: 1; }
+.tag {
+  display: inline-block;
+  background: color-mix(in srgb, var(--c, var(--brand)) 18%, transparent);
+  color: var(--c, var(--brand));
+  border: 1px solid color-mix(in srgb, var(--c, var(--brand)) 35%, transparent);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  width: fit-content;
+}
+.card h3 { margin: 10px 34px 4px 0; font-size: 1.1rem; line-height: 1.25; font-weight: 700; }
+.meta { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+.desc {
+  font-size: 0.88rem;
+  margin: 10px 0 14px;
+  color: var(--ink);
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+.owner { font-size: 0.78rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 10px; }
+.fav {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 0;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  filter: grayscale(1);
+  opacity: 0.4;
+  padding: 4px;
+}
+.fav[aria-pressed="true"] { filter: none; opacity: 1; }
+.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  background: var(--card);
+  border: 2px dashed var(--line);
+  border-radius: 16px;
+  padding: 50px 20px;
+  color: var(--muted);
+}
+
+/* Legend section */
+.legend { margin-top: 32px; }
+.legend h2 { margin: 0 0 4px; font-size: 1.15rem; font-weight: 800; }
+.legend p { margin: 0 0 14px; color: var(--muted); font-size: 0.85rem; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.2s;
+}
+.chip:hover { border-color: var(--brand); }
+.chip b { color: var(--muted); font-weight: 700; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c, var(--brand)); display: inline-block; }
+
+/* Modal & Dialog */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 20, 33, 0.75);
+  backdrop-filter: blur(3px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
+}
+.modal.open { display: flex; }
+.dialog {
+  width: min(620px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: var(--card);
+  border-radius: 22px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+}
+.inside { padding: 22px; }
+.x {
+  float: right;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  font-size: 20px;
+  cursor: pointer;
+}
+#mn { margin: 10px 0 2px; font-size: 1.5rem; font-weight: 800; }
+.details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0; }
+.detail { background: color-mix(in srgb, var(--ink) 5%, transparent); border-radius: 12px; padding: 11px; }
+.detail b { display: block; color: var(--muted); text-transform: uppercase; font-size: 0.66rem; letter-spacing: 0.07em; margin-bottom: 3px; }
+#mdesc { line-height: 1.6; font-size: 0.95rem; }
+.notes {
+  width: 100%;
+  min-height: 90px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  font: inherit;
+  background: var(--bg);
+  color: var(--ink);
+  resize: vertical;
+}
+.rate { display: flex; gap: 6px; align-items: center; margin: 10px 0; }
+.star { border: 0; background: transparent; font-size: 1.6rem; cursor: pointer; filter: grayscale(1); opacity: 0.3; padding: 0 2px; }
+.star.on { filter: none; opacity: 1; }
+
+/* Footer & Toast */
+footer { border-top: 1px solid var(--line); padding: 26px 0 36px; color: var(--muted); font-size: 0.85rem; text-align: center; }
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translate(-50%, 120%);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  transition: transform 0.25s ease-out;
+  z-index: 200;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+}
+.toast.show { transform: translate(-50%, 0); }
+
+/* Responsive Adjustments */
+@media(max-width: 900px) { .sel { grid-template-columns: repeat(2, 1fr); } }
+@media(max-width: 560px) {
+  .sel { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; }
+  .details { grid-template-columns: 1fr; }
+  .clear { margin-left: 0; width: 100%; }
+}
+@media print {
+  header, .panel, .quick, .legend, footer, .fav { display: none !important; }
+  .card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+  main { margin-top: 10px; }
+}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap">
     <div class="topbar">
-      <span class="kicker">12º Festival de Confrarias do Rio de Janeiro</span>
+      <span class="kicker">🍻 12º Festival de Confrarias do Rio de Janeiro • @fdcrj</span>
       <button class="ghost" id="theme" type="button">🌙 Tema</button>
     </div>
     <h1>🍺 Guia de Cervejas</h1>
-    <p class="sub">Encontre sua próxima cerveja por confraria, estilo BJCP, categoria, família,
-      responsável ou ingrediente. Marque suas favoritas e anote as notas de degustação — tudo fica
-      salvo no seu próprio navegador.</p>
+    <p class="sub">Explore todas as produções inscritas no 12º FDCRJ. Filtre por confraria, estilo, categoria ou ingrediente, avalie com estrelas e salve suas anotações de degustação!</p>
     <div class="stats">
       <div class="stat"><b id="sBeers">0</b><small>cervejas</small></div>
       <div class="stat"><b id="sConf">0</b><small>confrarias</small></div>
@@ -143,20 +373,22 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
   <section class="panel" aria-label="Filtros">
     <div class="search-row">
       <input class="search" id="q" type="search" autocomplete="off"
-        placeholder="Buscar por nome, ingrediente ou aroma: IPA, café, manga, limão, cacau…">
+        placeholder="Buscar por cerveja, aroma ou ingrediente: IPA, cacau, limão, mate, café...">
     </div>
     <div class="sel">
       <div class="field"><label for="cf">Confraria</label><select id="cf"></select></div>
       <div class="field"><label for="ct">Categoria</label><select id="ct"></select></div>
       <div class="field"><label for="fm">Família de estilo</label><select id="fm"></select></div>
       <div class="field"><label for="st">Estilo BJCP</label><select id="st"></select></div>
-      <div class="field"><label for="or">Ordenar por</label><select id="or">
-        <option value="cerveja">Nome da cerveja (A–Z)</option>
-        <option value="confraria">Confraria</option>
-        <option value="estilo">Estilo</option>
-        <option value="categoria">Categoria</option>
-        <option value="rating">Minha nota (maior primeiro)</option>
-      </select></div>
+      <div class="field"><label for="or">Ordenar por</label>
+        <select id="or">
+          <option value="cerveja">Nome da cerveja (A–Z)</option>
+          <option value="confraria">Confraria</option>
+          <option value="estilo">Estilo</option>
+          <option value="categoria">Categoria</option>
+          <option value="rating">Minha nota (maior primeiro)</option>
+        </select>
+      </div>
     </div>
     <div class="quick">
       <button class="pill" id="onlyFav" type="button" aria-pressed="false">⭐ Só favoritas</button>
@@ -179,8 +411,8 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
   <section class="grid" id="grid" aria-live="polite"></section>
 
   <section class="panel legend">
-    <h2>Legenda de estilos</h2>
-    <p>Clique em um estilo para filtrar a lista.</p>
+    <h2>Legenda de famílias</h2>
+    <p>Clique em uma família de estilos para filtrar a lista instantaneamente.</p>
     <div class="chips" id="chips"></div>
   </section>
 </main>
@@ -195,10 +427,10 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
       <div class="meta" id="mfam"></div>
       <div class="details" id="details"></div>
       <p id="mdesc"></p>
-      <h3 style="margin:18px 0 0;font-size:1rem">Minha degustação</h3>
+      <h3 style="margin:18px 0 6px;font-size:1rem">Minha avaliação & degustação</h3>
       <div class="rate" id="rate" aria-label="Nota"></div>
-      <textarea class="notes" id="notes" placeholder="Anotações: aroma, aparência, sabor, harmonização…"></textarea>
-      <div class="quick" style="margin-top:10px">
+      <textarea class="notes" id="notes" placeholder="Sua percepção: aparência, aroma, sabor, amargor, harmonização..."></textarea>
+      <div class="quick" style="margin-top:12px">
         <button class="pill" id="mfav" type="button" aria-pressed="false">⭐ Favoritar</button>
       </div>
     </div>
@@ -206,9 +438,8 @@ footer{border-top:1px solid var(--line);padding:22px 0 34px;color:var(--muted);f
 </div>
 
 <footer class="wrap">
-  <p>Guia interativo não oficial, montado a partir da lista de inscrições do 12º Festival de
-     Confrarias do Rio de Janeiro. Favoritas, notas e avaliações ficam salvas apenas neste
-     navegador quando o ambiente permitir armazenamento local. <strong>Aprecie com moderação — se beber, não dirija.</strong></p>
+  <p>Guia interativo do 12º Festival de Confrarias do Rio de Janeiro (FDCRJ). Suas anotações e avaliações ficam salvas localmente no seu navegador.<br>
+  <strong>Aprecie com moderação — Se beber, não dirija. Siga <a href="https://instagram.com/fdcrj" target="_blank" rel="noopener">@fdcrj</a> no Instagram.</strong></p>
 </footer>
 
 <div class="toast" id="toast"></div>
