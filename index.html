@@ -358,7 +358,31 @@ footer { border-top: 1px solid var(--line); padding: 26px 0 36px; color: var(--m
       <span class="kicker">🍻 12º Festival de Confrarias do Rio de Janeiro - 12FDCRJ • @fdcrj</span>
       <button class="ghost" id="theme" type="button">🌙 Tema</button>
     </div>
-    <h1><link rel="icon" type="image/jpeg" href="logo fdcrj.jpg"> Guia de Cervejas</h1>
+    <!-- Estrutura HTML -->
+<div class="header-logo">
+  <img src="logo fdcrj.jpg" alt="Logo FDCRJ" class="logo-img">
+  <h1>Guia de Cervejas</h1>
+</div>
+
+<!-- Estilização CSS -->
+<style>
+  .header-logo {
+    display: flex;       /* Coloca a imagem e o texto na mesma linha */
+    align-items: center; /* Alinha a imagem e o texto verticalmente pelo centro */
+    gap: 12px;           /* Espaço/distância entre a imagem e a frase */
+  }
+
+  .logo-img {
+    width: 40px;         /* Ajuste a largura da imagem como desejar */
+    height: auto;        /* Mantém a proporção da imagem */
+  }
+
+  h1 {
+    margin: 0;           /* Remove margens padrão do título para alinhar perfeitamente */
+    font-size: 24px;     /* Tamanho da fonte */
+  }
+</style>
+    <h1>Guia de Cervejas</h1>
     <p class="sub">Explore todas as produções inscritas no 12º FDCRJ. Filtre por confraria, estilo, categoria ou ingrediente, avalie com estrelas e salve suas anotações de degustação!</p>
     <div class="stats">
       <div class="stat"><b id="sBeers">0</b><small>cervejas</small></div>
