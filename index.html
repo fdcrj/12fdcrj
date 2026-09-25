@@ -39,9 +39,23 @@ a { color: var(--brand); text-decoration: none; }
 a:hover { text-decoration: underline; }
 .wrap { max-width: 1180px; margin: auto; padding: 0 16px; }
 
-/* Header */
+/* Header com Marca d'água da imagem logo fdcrj.jpg */
 header { background: var(--header-bg); color: #fff; padding: 30px 0 90px; position: relative; overflow: hidden; }
-header::after { content: ""; position: absolute; right: 20px; top: 10px; width: 250px; height: 250px; background-image: url('logo-fdcrj.png'); background-size: contain; background-repeat: no-repeat; opacity: 0.12; pointer-events: none; }
+header::after {
+  content: "";
+  position: absolute;
+  right: 20px;
+  top: 10px;
+  width: 260px;
+  height: 260px;
+  background-image: url('logo fdcrj.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.18;
+  pointer-events: none;
+}
+
 .kicker { letter-spacing: 0.16em; font-size: 0.75rem; font-weight: 800; color: #fceae6; text-transform: uppercase; }
 h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin: 6px 0 6px; line-height: 1.1; font-weight: 800; }
 .sub { color: #d0e1fd; max-width: 72ch; margin: 0; font-size: 0.95rem; opacity: 0.95; line-height: 1.6; }
